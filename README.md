@@ -15,8 +15,8 @@ KeyKa family storages and yet-to-be-announced aforementioned storage will (quite
 
 KeyKa family storages will have the following _reader_ instance methods:
  * Find a **fixed-size** value (e.g. 64-bit integer) associated with **variable-sized** key (e.g. a string) by exact match by `O(log n)`, where `n` is a number of key-value pairs in storage.
- * (not yet implemented **in code**, but possible in theory and practice) The same as ^ (with same computational complexity), but using a non-exact match in any direction.
- * (not yet implemented **in code**, but possible in theory and practice) Find all key-value combinations by prefix or range match by `O(log n)` (for finding one match) + `O(k)` (for iterating over nodes and for checking an invariant).
+ * (not implemented **in code**, but possible in theory and practice) The same as ^ (with same computational complexity), but using a non-exact match in any direction.
+ * Find all key-value combinations by prefix or range match by `O(log n)` (for finding one match) + `O(k)` (for iterating over nodes and for checking an invariant).
 
 ### Current state
 I consider all the theory used in this project as sound.
