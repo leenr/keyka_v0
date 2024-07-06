@@ -9,8 +9,8 @@ from typing import Final, NamedTuple
 
 from .memcmp import MemCmpResult, memcmp
 from .structs import (
-    BRANCH_NODE_HEADER_STRUCT, KEY_SIZE_STRUCT, LEAF_NODE_OFFSET_FLAG,
-    LEAF_NODE_HEADER_STRUCT, MAGIC_BYTES, OFFSET_STRUCT
+    BRANCH_NODE_HEADER_STRUCT, KEY_SIZE_STRUCT, LEAF_NODE_HEADER_STRUCT,
+    MAGIC_BYTES, OFFSET_STRUCT
 )
 
 
@@ -44,12 +44,12 @@ class KeyKaReader:
         return self._mv[offset:offset + size]
 
     def _read_node(self, offset: int) -> _Node | None:
-        # print(f'read 0x{offset:08x}: ', end='')
+        # print(f'read {offset:+#011x}: ', end='')
         if offset == NULL:
             # print('null')
             return None  # "null" offset (no node)
-        elif not offset & LEAF_NODE_OFFSET_FLAG:
-            # branch
+        elif offset > 0:
+            # "branch" node
             # print(f'branch')
             value, left_offset, right_offset = (
                 BRANCH_NODE_HEADER_STRUCT.unpack_from(self._mv, offset=offset)
@@ -64,9 +64,9 @@ class KeyKaReader:
                 right_offset=right_offset
             )
         else:
-            # leaf
+            # "leaf" node
             # print(f'leaf')
-            offset &= ~LEAF_NODE_OFFSET_FLAG  # reset "leaf node" flag in offset
+            offset = -offset  # reset "leaf node" flag in offset
             value, = (
                 LEAF_NODE_HEADER_STRUCT.unpack_from(self._mv, offset=offset)
             )
@@ -101,7 +101,9 @@ def main() -> None:
             memoryview(mmaped) as mv
         ):
             reader = KeyKaReader(mv)
-            # print(reader.find_exact(b'key015_a'))
+            for i in range(48):
+                key = f'key{i:03d}_a'.encode('utf-8')
+                print(key, reader.find_exact(key))
             code.interact(local={**locals(), **globals()})
 
 

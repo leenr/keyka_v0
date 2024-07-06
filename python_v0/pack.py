@@ -4,7 +4,7 @@ from typing import BinaryIO, Collection, Iterable
 
 from .structs import (
     BRANCH_NODE_HEADER_STRUCT, KEY_SIZE_STRUCT, LEAF_NODE_HEADER_STRUCT,
-    LEAF_NODE_OFFSET_FLAG, MAGIC_BYTES, OFFSET_STRUCT
+    MAGIC_BYTES, OFFSET_STRUCT
 )
 
 
@@ -21,24 +21,19 @@ def get_btree_level(idx: int) -> int:
     # it is correct, and it's working brilliantly.
     # "Level" here is the height from bottom at which the node with that index
     # will reside if there was a binary tree.
-    # Basically, it is counting where the first "1" resides in the binary
+    # Basically, it is counting where the first "0" resides in the binary
     # number representation of `idx`.
-    # The special case is for `idx` `0`. There is no "1" anywhere, so it's
-    # assigned the special "0" level (by the name of `idx`).
 
-    if idx == 0:
-        return 0
-
-    level = 1
-    while idx % 2 == 0:
+    level = 0
+    while idx % 2 == 1:
         idx >>= 1
         level += 1
     return level
 
 
 def pack_tree(key_values: Collection[tuple[bytes, int]], *, f: BinaryIO) -> None:
-    write_offset_to = {}
-    node_offsets = []
+    write_offset_to = dict[int, int]()
+    node_offsets = list[int]()
 
     tree_base = f.tell()
 
@@ -52,37 +47,35 @@ def pack_tree(key_values: Collection[tuple[bytes, int]], *, f: BinaryIO) -> None
             assert key > prev_key, f'Unsorted input: {key} !> {prev_key}'
         prev_key = key
 
-        # 0  - only the first element (leaf)
-        # 1  - leafs, expect for `idx == 1`
-        # 2+ - branches
+        # 0  - leaf
+        # 1+ - branches
         level = get_btree_level(idx)
-        is_leaf = level <= 1 and idx != 1
+        is_leaf = level == 0
 
         # we need to reference that node from the others somehow,
         # so save the offset from the start of the tree
         node_offset = f.tell() - tree_base
-        assert not node_offset & LEAF_NODE_OFFSET_FLAG, 'tree grew too big'
         if is_leaf:
-            node_offset |= LEAF_NODE_OFFSET_FLAG
+            # negative offsets are for "leaf" nodes
+            node_offset = -node_offset
 
         node_offsets.append(node_offset)
 
         print(
-            f'#{idx}(level={level}) 0x{node_offset:08x}: {key!r} = {value!r}: ',
+            f'#{idx}(level={level}) {node_offset:+#011x}: {key!r} = {value!r}: ',
             end=''
         )
 
         if not is_leaf:
             # the "delta" is a number of indexes to skip (both forward and
             # backwards) to access the children on the lower level
-            # special case for level `1`: "delta" cannot be < 1
-            delta = max(1, 2 ** (level - 2))
+            delta = 2 ** (level - 1)
 
             left_offset = node_offsets[idx - delta]
             right_offset = 0  # will be filled later if needed
             f.write(BRANCH_NODE_HEADER_STRUCT.pack(value, left_offset, right_offset))
 
-            print(f'branch ±{delta} (left_offset=0x{left_offset:08x})', end='')
+            print(f'branch ±{delta} (left_offset={left_offset:+#011x})', end='')
 
             # if there is no child directly underneath us, descend deeper
             while idx + delta >= len(key_values):
@@ -105,15 +98,15 @@ def pack_tree(key_values: Collection[tuple[bytes, int]], *, f: BinaryIO) -> None
 
         if (_write_offset_to := write_offset_to.pop(idx, None)) is not None:
             # we're requested to write our offset to some other node
-            print(f'+ #{idx} *0x{_write_offset_to - tree_base:08x} = 0x{node_offset:08x}')
+            print(f'+ #{idx} *{_write_offset_to - tree_base:#010x} = {node_offset:+#011x}')
             pwrite(f, _write_offset_to, OFFSET_STRUCT.pack(node_offset))
 
     # write the root
     if idx is not None:
         # the "root" is the topmost level node (it can access any other node)
-        root_idx = 2 ** (math.ceil(math.log(idx + 1, 2)) - 1)
+        root_idx = 2 ** math.floor(math.log(idx + 1, 2)) - 1
         root_offset = node_offsets[root_idx]
-        print(f'root = #{idx} 0x{root_offset:08x}')
+        print(f'root = #{root_idx} {root_offset:+#011x}')
         pwrite(f, tree_base, OFFSET_STRUCT.pack(root_offset))
     else:
         # empty tree, do nothing since root offset is already set to 0
