@@ -122,7 +122,7 @@ class KeyKaReader:
     ) -> _Node | None:
 
         node = self._root_node
-        last_left_node = node
+        last_left_node = None
         while node is not None:
             match memcmp(key_mv, node.key_mv):
                 case MemCmpResult.LESS:
