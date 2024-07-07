@@ -247,6 +247,7 @@ def main() -> None:
                 key = f'key{i:08d}_a'.encode('utf-8')
                 reader.find_exact(key)
                 # print(key, reader.find_exact(key))
+            del reader
             # print(*reader.find_range(b'', b'key0000010_a'))
             # print(*reader.find_range(b'key16775200_a'))
             # print(*reader.find_range(b'key00000001_a', b'key00000100_a'))
