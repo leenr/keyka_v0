@@ -26,7 +26,7 @@ File format of KeyKa v0 is subject to change for the time being. It will most li
 
 Implementations is work-in-progress. Things work, but little tested yet.
 
-Currently, I only have pure-Python basic implementation of both _packer_ and _reader_ (see [_python_v0_](./python_v0) directory). In the long run, this implememtaion will probably focus on being the reference implementation, not the speedy one.
+Currently, I only have pure-Python basic implementation of both _packer_ and _reader_ (see [_keyka_ref_impl_python_](./keyka_ref_impl_python) directory). In the long run, this implememtaion will probably focus on being the reference implementation, not the speedy one.
 
 I'm also considering writing a Cython and a Rust implementations as a "production-ready" libraries. They will probably live in this monorepository for the time being, but may be decoupled as project matures.
 
