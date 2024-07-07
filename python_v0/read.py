@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Final, NamedTuple
 
 from .memcmp import MemCmpResult, memcmp
 from .structs import (
-    BRANCH_NODE_HEADER_STRUCT, KEY_SIZE_STRUCT, LEAF_NODE_HEADER_STRUCT,
+    BRANCH_NODE_HEADER_STRUCT, KEY_LENGTH_STRUCT, LEAF_NODE_HEADER_STRUCT,
     MAGIC_BYTES, OFFSET_STRUCT
 )
 
@@ -44,9 +44,9 @@ class KeyKaReader:
         # print('root =', self._root_node)
 
     def _read_key(self, offset: int) -> memoryview:
-        size, = KEY_SIZE_STRUCT.unpack_from(self._mv, offset=offset)
-        offset += KEY_SIZE_STRUCT.size
-        return self._mv[offset:offset + size]
+        length, = KEY_LENGTH_STRUCT.unpack_from(self._mv, offset=offset)
+        offset += KEY_LENGTH_STRUCT.size
+        return self._mv[offset:offset + length]
 
     def _read_node(self, offset: int) -> _Node | None:
         # print(f'read {offset:+#011x}: ', end='')
@@ -98,7 +98,7 @@ class KeyKaReader:
             next_node_offset = (
                 -node.offset
                 + LEAF_NODE_HEADER_STRUCT.size
-                + KEY_SIZE_STRUCT.size
+                + KEY_LENGTH_STRUCT.size
                 + len(node.key_mv)
             )
             if next_node_offset >= len(self._mv):
@@ -108,7 +108,7 @@ class KeyKaReader:
             next_node_offset = (
                 -node.offset
                 - len(node.key_mv)
-                - KEY_SIZE_STRUCT.size
+                - KEY_LENGTH_STRUCT.size
                 - BRANCH_NODE_HEADER_STRUCT.size
             )
             if -next_node_offset >= len(self._mv):

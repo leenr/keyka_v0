@@ -2,7 +2,7 @@ import struct
 
 
 # little-endian uint16
-KEY_SIZE_STRUCT = struct.Struct('<' + 'H')
+KEY_LENGTH_STRUCT = struct.Struct('<' + 'H')
 
 # little-endian int32 (negative is "leaf", positive is "branch")
 OFFSET_STRUCT = struct.Struct('<' + 'i')
@@ -23,7 +23,7 @@ MAGIC_BYTES = b'\x00Key\x00Ka\x08'
 
 __all__ = (
     'BRANCH_NODE_HEADER_STRUCT',
-    'KEY_SIZE_STRUCT',
+    'KEY_LENGTH_STRUCT',
     'LEAF_NODE_HEADER_STRUCT',
     'MAGIC_BYTES',
     'OFFSET_STRUCT'

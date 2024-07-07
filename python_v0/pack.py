@@ -3,7 +3,7 @@ import os
 from typing import BinaryIO, Collection, Iterable
 
 from .structs import (
-    BRANCH_NODE_HEADER_STRUCT, KEY_SIZE_STRUCT, LEAF_NODE_HEADER_STRUCT,
+    BRANCH_NODE_HEADER_STRUCT, KEY_LENGTH_STRUCT, LEAF_NODE_HEADER_STRUCT,
     MAGIC_BYTES, OFFSET_STRUCT
 )
 
@@ -96,7 +96,7 @@ def pack_tree(key_values: Iterable[tuple[bytes, int]], *, f: BinaryIO) -> None:
             higher_node_idx = idx - 1  # higher-level node is always the previous one for leaf nodes
 
         # write key
-        f.write(KEY_SIZE_STRUCT.pack(len(key)) + key)
+        f.write(KEY_LENGTH_STRUCT.pack(len(key)) + key)
 
         # write our offset to the higher-lever node "right offset" field
         # `if` is there to not do it for the first node
@@ -143,4 +143,3 @@ if __name__ == '__main__':
         'test_pack.keyka',
         ((f'key{i:08d}_a'.encode('utf-8'), i) for i in range(2 ** 24))
     )
-
